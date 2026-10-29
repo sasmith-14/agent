@@ -1,0 +1,23 @@
+# Decisions
+
+- Synchronous interfaces throughout: ordering stays visible and no async/event-loop machinery is needed for sequential Phase 1 tools.
+- REST only: provider formats live in their adapters; the loop consumes normalized Pydantic values through a Protocol.
+- Opaque, serialization-excluded `Message.provider_data` preserves Gemini signed content and Ollama thinking data without provider-specific loop logic or instance history caches.
+- Gemini uses `parametersJsonSchema` to pass the registry's JSON schema directly, avoiding lossy OpenAPI-subset conversion. Preserve API IDs; generate internal UUIDs when absent.
+- Configuration order: explicit CLI provider → env → dotenv → YAML → defaults. A per-load Settings subclass closes over one YAML mapping, avoiding global config-path state.
+- Models must be supplied by config/env. Endpoint defaults live only in config; example model IDs are replaceable YAML values.
+- `.env`, YAML relative paths, and `runs_dir` resolve from the working directory. No directory discovery or implicit chdir.
+- Keys in YAML are rejected. SecretStr masks config output; trace/console redaction also replaces configured secret values and common credential patterns.
+- The loop publishes policy decisions; PolicyEngine is a pure permission boundary with an injected approver. Risks are displayed, not an additional implicit policy.
+- Denied calls and tool errors are normalized JSON tool messages, preserving `ok` alongside output. Tools never run for denied calls; ask defaults to denial on EOF.
+- Calculator supports bounded numeric AST arithmetic only, with no exponentiation, names, calls, attributes, or eval. Phase 1 needs predictable demo arithmetic.
+- Output truncation includes the marker inside the configured character bound. Even unknown-tool and argument-error output passes through the same bound.
+- Steps count provider calls. Reported tokens are checked at `>=` the budget before executing tools; one response can overshoot because usage arrives after generation. No token estimation or provider-specific budget logic in the loop.
+- Gemini output usage includes thinking tokens; repeated input tokens across calls count toward the total. Missing usage is treated as zero, reflecting what the provider reported.
+- Retry 429, 5xx, and timeouts; permanent HTTP and connection errors fail immediately. Backoff uses jitter and a cap; Retry-After above the cap aborts rather than retrying early.
+- Subscriber failures propagate: losing the trace must stop subsequent actions. Provider errors and interruption return an error RunResult and emit RunFinished; storage failures cannot promise a final trace record.
+- Events are copied for subscribers, and CLI/application objects are created per invocation. No module-level mutable agent, config, bus, registry, console, or Typer app.
+- TraceWriter uses one append/close per event, owner-only file permissions, and safe run IDs. Thread/process coordination and durable fsync are outside this synchronous phase.
+- Live tests are opt-in and require both calculator and get_time. Offline adapter tests also preserve signatures, IDs, usage, and tool-result grouping across actual REST payloads.
+- Packaging is pending permission for build-only setuptools, which is outside the supplied dependency allowlist. No alternative backend or framework was added silently.
+- No non-goal capabilities, agent framework, LLM SDK, extra runtime dependency, planner, sub-agent, server, UI, or token streaming.

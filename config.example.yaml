@@ -1,0 +1,20 @@
+provider: gemini
+gemini:
+  model: gemini-3.8-flash
+  base_url: https://generativelanguage.googleapis.com/v1beta
+ollama:
+  model: qwen3:8b
+  host: http://localhost:11434
+limits:
+  max_steps: 10
+  max_total_tokens: 20000
+retry:
+  max_attempts: 3
+  base_delay: 0.5
+  max_delay: 30
+timeout_seconds: 60
+policy:
+  default: ask
+  tools: {}
+tool_output_max_length: 4000
+runs_dir: runs
